@@ -1,3 +1,4 @@
+
 name: Deploy Wedding Invitation
 
 on:
@@ -14,18 +15,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Extract website ZIP
-        run: |
-          unzip -q royal-wedding-invitation-github-ready.zip -d extracted
-          cp -R extracted/royal-wedding-invitation/. .
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Extract website
+        run: |
+          unzip -q royal-wedding-invitation-github-ready.zip -d extracted
+          rm -rf extracted/royal-wedding-invitation/.github
+          cp -R extracted/royal-wedding-invitation/. .
+
+      - name: Fix TypeScript configuration
+        run: |
+          node -e "const fs=require('fs');const p='tsconfig.node.json';const c=JSON.parse(fs.readFileSync(p));delete c.compilerOptions.allowImportingTsExtensions;fs.writeFileSync(p,JSON.stringify(c,null,2));"
 
       - name: Install dependencies
         run: npm install
@@ -33,11 +37,10 @@ jobs:
       - name: Build website
         run: npm run build
 
-      - name: Upload website
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
-      - name: Publish website
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
-
